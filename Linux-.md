@@ -400,6 +400,56 @@ Linux 操作系统初始化脚本 profile
 
 	reboot
 
+## 安装Git
+
+### yum安装
+
+    yum -y install git
+
+yum安装git被安装在/usr/libexec/git-core目录下
+
+### 源码安装
+
+1. 下载源码
+
+    进入git在GitHub上发布版本页面https://github.com/git/git/releases，选择最新版的tar.gz包，然后通过sftp协议上传至服务器
+    或者复制链接，进入服务器终端，centos使用wget 地址，进行下载
+
+2. 解压压缩包
+
+    tar -zxvf xxxxx.tar.gz
+
+3. 安装编译所需要的依赖
+
+    yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel gcc perl-ExtUtils-MakeMaker
+    (有些具体我也不清楚)
+
+4. 安装编译源码所需依赖的时候，yum自动帮你安装了git，需要先卸载这个旧版的git
+
+    yum -y remove git
+
+5. 编译git源码
+
+    make prefix=/usr/local/developtools/git all
+
+6. 安装git至`/usr/local/developtools/git`目录下
+
+    make prefix=/usr/local/developtools/git install
+
+7. 配置环境变量
+
+    vim /etc/profile
+    在最下面加上：
+        export PATH=$PATH:/usr/local/developtools/git/bin
+8. 刷新环境变量
+
+    source /etc/profile
+    这里最好备份一份，以防所有环境变量失效
+
+9. 查看Git是否安装完成
+
+    git --version
+
 ## 安装Tomcat
 
 ### yum安装
