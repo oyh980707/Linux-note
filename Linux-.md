@@ -450,6 +450,29 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
     git --version
 
+## 安装JDK
+
+1. 下载Linux版本的JDK
+
+2. 解压到指定的目录
+
+3. 设置环境变量
+
+    修改 /etc/profile
+
+    export JAVA_HOME=/usr/local/developtools/jdk1.8.0_161
+    export JRE_HOME=/usr/local/developtools/jdk1.8.0_161/jre
+    export CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+    export PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+
+4. 刷新配置文件
+
+    source /etc/profile
+
+5. 测试
+
+    java -version
+
 ## 安装Tomcat
 
 ### yum安装
