@@ -460,6 +460,37 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
     [注] 最好切换到git用户 不然后面新建的git仓库都要改权限
 
+## 搭建gitblit
+
+1. 官网下载tar包
+
+    wget https://github.com/gitblit/gitblit/releases/download/v1.9.1/gitblit-1.9.1.tar.gz
+    或者使用 sftp上传
+
+2. 解压
+
+    tar -zxvf gitblit-1.9.1.tar.gz
+
+3. 修改配置文件 ./data/default.properties
+
+    修改路径
+        git.repositoriesFolder = /usr/local/developtools/git-repository
+    修改端口
+        server.httpPort = 10101
+    可以修改ssh端口：克隆后面的端口
+        git.sshPort = 29418
+    其他的不需要修改
+
+4. 服务器防火墙端口配置
+
+    firewall-cmd --permanent --add-port=10101/tcp
+    firewall-cmd --reload
+
+5. 安全组规则配置，在服务器上（例如阿里云控制台），添加安全组规则 10101
+
+6. 访问：http://ip:10101 默认用户名admin 密码admin
+
+
 ## 安装JDK
 
 1. 下载Linux版本的JDK
@@ -604,6 +635,10 @@ MySQL 分支为两个软件:
 
    systemctl stop mariadb.service
    systemctl restart mariadb.service
+
+5. 设置自启动
+
+    systemctl enable mariadb.service
 
 #### MySQL 编码设置
 
