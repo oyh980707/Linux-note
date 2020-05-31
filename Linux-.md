@@ -441,6 +441,7 @@ yum安装git被安装在/usr/libexec/git-core目录下
     vim /etc/profile
     在最下面加上：
         export PATH=$PATH:/usr/local/developtools/git/bin
+
 8. 刷新环境变量
 
     source /etc/profile
@@ -449,6 +450,15 @@ yum安装git被安装在/usr/libexec/git-core目录下
 9. 查看Git是否安装完成
 
     git --version
+
+10. 创建一个git用户组和用户，用来运行git服务
+
+    groupadd git    #创建git组
+    useradd git -g git  #创建git用户
+    passwd git      #参数是用户名
+    su - git        #切换git用户
+
+    [注] 最好切换到git用户 不然后面新建的git仓库都要改权限
 
 ## 安装JDK
 
@@ -595,7 +605,7 @@ MySQL 分支为两个软件:
    systemctl stop mariadb.service
    systemctl restart mariadb.service
 
-### MySQL 编码设置
+#### MySQL 编码设置
 
 1. 检查
 
@@ -648,6 +658,134 @@ MySQL 分支为两个软件:
    	| character_set_system     | utf8                       |
    	| character_sets_dir       | /usr/share/mysql/charsets/ |
    	+--------------------------+----------------------------+
+
+5. 添加或者修改密码
+
+     set password for root@localhost = password('123');
+
+### 源码安装MySQL
+
+1. 查看旧版本
+
+    rpm -qa |grep -i mysql
+
+2. 强力删除
+
+    rpm -e --nodeps 需要删除MySQL的版本
+
+3. 删除`/etc/my.cnf`配置文件
+
+    rm /etc/my.cnf
+
+4. 下载MySQL软件包
+
+    wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.16.tar.gz
+
+5. 安装编译代码需要的包
+
+    yum -y install make gcc-c++ cmake bison-devel ncurses-devel
+
+    各个包功能的简单介绍：
+    make    mysql源代码是由C和C++语言编写，在linux下使用make对源码进行编译和构建，要求必须安装make 3.75或以上版本
+    gcc     GCC是Linux下的C语言编译工具，要求必须安装GCC4.4.6或以上版本
+    cmake   mysql使用cmake跨平台工具预编译源码，用于设置mysql的编译参数。如：安装目录、数据存放目录、字符编码、排序规则等。
+    bison   Linux下C/C++语法分析器
+    ncurses 字符终端处理库
+
+6. 解压`mysql-5.7.16.tar.gz`
+
+    tar -zxvf mysql-5.7.16.tar.gz
+
+7. 预编译
+
+    cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/developtools/mysql -DMYSQL_DATADIR=/usr/local/developtools/mysql/data/ -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci
+    
+    此过程出现了一个错误：CMake Error at cmake/boost.cmake:81 (MESSAGE):....
+    网上查询答案发现：高版本mysql需要boots库的安装才可以正常运行
+    解决办法是：
+
+        1. 在 /usr/local/developtools 下创建一个名为boost的文件夹
+            mkdir -p /usr/local/developtools/boost
+        2. 进入这个新创建的文件夹然后下载boost
+            wget http://www.sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz
+        3. 解压
+            tar -xvzf boost_1_59_0.tar.gz
+        4. 继续cmake，需要多加一个参数(最后面)
+            cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/developtools/mysql -DMYSQL_DATADIR=/usr/local/developtools/mysql/data/ -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_BOOST=/usr/local/developtools/boost
+
+8. 编译和安装
+
+    make && make install
+
+9. 初始化MySQL配置表
+
+    进入MySQL目录
+        groupadd mysql
+        useradd mysql
+    对MySQL下的所有文件授权
+        chown -R mysql:mysql /usr/local/developtools/mysql
+    生成data包
+        在mysql目录下创建data目录
+        mkdir data
+        执行
+        /usr/local/developtools/mysql/bin/mysqld --initialize --user=mysql --basedir=/usr/local/developtools/mysql --datadir=/usr/local/developtools/mysql/data
+        执行完后，最后一行信息：2020-05-31T03:49:27.419859Z 1 [Note] A temporary password is generated for root@localhost: ZQ_#ogt*V5%=
+
+        这里它给了root一个初始密码，后面要登录的时候要用到这个密码。
+
+    将mysql/目录下除了data/目录的所有文件，改回root用户所有，mysql用户只需作为mysql/data/目录下所有文件的所有者
+        chown -R root .
+        chown -R mysql data
+
+    复制配置文件(mysql目录下)
+        cp support-files/my-default.cnf /etc/my.cnf
+
+    mysql5.7配置文件需要修改my.cnf关键配置，mysql5.7之前默认配置文件中是有配置项的，不用手动修改
+
+        [mysqld]
+        basedir = /usr/local/developtools/mysql/mysql
+        datadir = /usr/local/developtools/mysql/data
+        port = 3306
+        socket = /usr/local/developtools/mysql/tmp/mysql.sock
+        
+        sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+
+        tmp目录不存在，请创建之。否则会出错，创建后要赋予mysql权限，chown -R mysql:mysql tmp，如果mysql.sock指定到/tmp以外的目录，需要在my.cnf中添加[client]并且指定socket位置，否则登录mysql时会报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2) 应该是，默认会找tmp目录下的sock文件
+
+10. 将mysqld服务加入开机自启动项。
+    
+    将 /usr/local/developtools/mysql/support-files/mysql.server 拷贝为 /etc/init.d/mysql 并设置运行权限，这样就可以使用service mysql命令启动/停止服务
+        #cp ./support-files/mysql.server /etc/init.d/mysql
+        #chmod +x /etc/init.d/mysql
+    否则就只能使用/usr/local/developtools/mysql/bin/mysqld_safe --user=mysql & 命令来启动服务
+    还需要把mysql.server中basedir的相关路径，改为自定义的路径，默认路径是/usr/local/mysql
+    
+    把mysql注册为开机启动的服务
+        #chkconfig --add mysql
+
+    查看是否添加成功
+        chkconfig --list mysql
+        mysqld          0:关闭  1:关闭  2:启用  3:启用  4:启用  5:启用  6:关闭
+
+
+11. 配置环境变量
+
+    修改 /etc/profile 添加如下内容
+        export PATH=$PATH:/usr/local/developtools/mysql/bin
+    刷新环境变量
+        source /etc/profile
+
+12. 登录mysql服务
+
+    mysql -uroot -p 生成的密码
+    连上后，在做任何操作前，mysql要求要改掉root的密码后才能进行操作。
+        ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+    需要执行：set password for root@localhost = password('123'); 
+
+最后一步一直报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/usr/local/developtools/mysql/tmp/mysql.sock' (2)
+不想在折腾了，直接yum安装得了
+
+
 
 ## 部署Web项目到服务器
 
