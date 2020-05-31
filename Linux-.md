@@ -1049,8 +1049,7 @@ Nginx 是一款高性能的Web服务器软件.
 
    tar -zxf nginx-1.12.2.tar.gz
    cd nginx-1.12.2
-   ./configure --prefix=/usr/local/nginx --user=nginx   
-   	--with-http_ssl_module
+   ./configure --prefix=/usr/local/nginx --user=nginx --with-http_ssl_module
    make
    make install
 
@@ -1081,7 +1080,160 @@ Nginx 是一款高性能的Web服务器软件.
 
 测试, 用浏览器访问
 
-	http:/192.168.17.70 
+	http://ip
+
+配置系统服务
+
+    vim /etc/init.d/nginx
+    源地址：https://www.nginx.com/resources/wiki/start/topics/examples/redhatnginxinit/
+    找到nginx="..." NGINX_CONF_FILE="..." 这两句改成你自己的目录位置
+
+        #!/bin/sh
+        # nginx - this script starts and stops the nginx daemon
+        #
+        # chkconfig:   - 85 15
+        # description:  NGINX is an HTTP(S) server, HTTP(S) reverse \
+        #               proxy and IMAP/POP3 proxy server
+        # processname: nginx
+        # config:      /usr/local/tools/nginx/nginx-1.14.2/conf/nginx.conf
+        # config:      /etc/sysconfig/nginx
+        # pidfile:     /usr/local/tools/nginx/nginx-1.14.2/logs/nginx.pid
+
+        # Source function library.
+        . /etc/rc.d/init.d/functions
+
+        # Source networking configuration.
+        . /etc/sysconfig/network
+
+        # Check that networking is up.
+        [ "$NETWORKING" = "no" ] && exit 0
+
+        # nginx 文件的目录 需要修改为自己的位置
+        nginx="/usr/local/developtools/nginx/sbin/nginx"
+        prog=$(basename $nginx)
+        
+        # nginx 配置文件的位置 需要修改为自己的位置
+        NGINX_CONF_FILE="/usr/local/developtools/nginx/conf/nginx.conf"
+
+        [ -f /etc/sysconfig/nginx ] && . /etc/sysconfig/nginx
+
+        lockfile=/usr/local/tools/nginx/nginx-1.14.2/logs/lock/subsys/nginx
+
+        make_dirs() {
+        # make required directories
+        user=`$nginx -V 2>&1 | grep "configure arguments:.*--user=" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
+        if [ -n "$user" ]; then
+            if [ -z "`grep $user /etc/passwd`" ]; then
+                useradd -M -s /bin/nologin $user
+            fi
+            options=`$nginx -V 2>&1 | grep 'configure arguments:'`
+            for opt in $options; do
+                if [ `echo $opt | grep '.*-temp-path'` ]; then
+                    value=`echo $opt | cut -d "=" -f 2`
+                    if [ ! -d "$value" ]; then
+                        # echo "creating" $value
+                        mkdir -p $value && chown -R $user $value
+                    fi
+                fi
+            done
+            fi
+        }
+
+        start() {
+            [ -x $nginx ] || exit 5
+            [ -f $NGINX_CONF_FILE ] || exit 6
+            make_dirs
+            echo -n $"Starting $prog: "
+            daemon $nginx -c $NGINX_CONF_FILE
+            retval=$?
+            echo
+            [ $retval -eq 0 ] && touch $lockfile
+            return $retval
+        }
+
+        stop() {
+            echo -n $"Stopping $prog: "
+            killproc $prog -QUIT
+            retval=$?
+            echo
+            [ $retval -eq 0 ] && rm -f $lockfile
+            return $retval
+        }
+
+        restart() {
+            configtest || return $?
+            stop
+            sleep 1
+            start
+        }
+
+        reload() {
+            configtest || return $?
+            echo -n $"Reloading $prog: "
+            killproc $nginx -HUP
+            RETVAL=$?
+            echo
+        }
+
+        force_reload() {
+            restart
+        }
+
+        configtest() {
+        $nginx -t -c $NGINX_CONF_FILE
+        }
+
+        rh_status() {
+            status $prog
+        }
+
+        rh_status_q() {
+            rh_status >/dev/null 2>&1
+        }
+
+        case "$1" in
+            start)
+                rh_status_q && exit 0
+                $1
+                ;;
+            stop)
+                rh_status_q || exit 0
+                $1
+                ;;
+            restart|configtest)
+                $1
+                ;;
+            reload)
+                rh_status_q || exit 7
+                $1
+                ;;
+            force-reload)
+                force_reload
+                ;;
+            status)
+                rh_status
+                ;;
+            condrestart|try-restart)
+                rh_status_q || exit 0
+                    ;;
+            *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload|configtest}"
+                exit 2
+        esac
+
+    配置启动脚本权限：chmod a+x /etc/init.d/nginx
+    启动nginx: /etc/init.d/nginx start
+    停止nginx: /etc/init.d/nginx stop
+
+    加入系统服务：chkconfig --add /etc/init.d/nginx
+    使用systemctl启动nginx: systemctl start nginx
+    使用systemctl停止nginx: systemctl stop nginx
+
+开机自启
+
+    systemctl enable nginx
+    或者
+    配置开机启动:vi /etc/rc.local在最后加一句/etc/init.d/nginx start
 
 ## Nginx 的配置文件结构
 
