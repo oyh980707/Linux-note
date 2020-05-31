@@ -462,6 +462,8 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
 ## 搭建gitblit
 
+相似的还有gogs，gitlab等
+
 1. 官网下载tar包
 
     wget https://github.com/gitblit/gitblit/releases/download/v1.9.1/gitblit-1.9.1.tar.gz
@@ -489,6 +491,67 @@ yum安装git被安装在/usr/libexec/git-core目录下
 5. 安全组规则配置，在服务器上（例如阿里云控制台），添加安全组规则 10101
 
 6. 访问：http://ip:10101 默认用户名admin 密码admin
+
+
+## 安装gitlab
+
+1. 安装ssh
+
+    sudo yum install -y curl policycoreutils-pythonopenssh-server
+
+2. 设置SSH服务开机自启
+
+    systemctl enable sshd
+
+3. 启动ssh
+
+    systemctl start sshd
+
+4. 安装Postfix以发送通知邮件
+    
+    yum install postfix
+
+5. 设置Postfix自启动
+
+    systemctl enable postfix
+
+6. 启动Postfix
+
+    systemctl start postfix
+
+    此时可能会报错：Job for postfix.service failed because the control process exited with error code. See "systemctl status postfix.service" and "journalctl -xe" for details.
+    解决方法是修改 /etc/postfix/main.cf 的设置
+        inet_protocols = ipv4
+        inet_interfaces = all
+
+7. 利用wget下载gitlab镜像
+
+    wget https://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/yum/el7/gitlab-ce-10.0.0-ce.0.el7.x86_64.rpm
+
+8. 安装gitlab
+
+    rpm -i --prefix=/usr/local/developtools/gitlab gitlab-ce-10.0.0-ce.0.el7.x86_64.rpm
+    在这里会报错有个依赖必须安装
+    yum install policycoreutils-python
+
+9. 修改gitlab配置文件指定服务器ip和自定义端口：
+
+    vim /etc/gitlab/gitlab.rb
+
+    external_url "http://ip(或域名):port"
+    nginx['listen_port'] = port
+    unicorn['port'] = 8088
+    postgresql['shared_buffers'] = "256MB"
+    postgresql['max_connections'] = 200
+
+10. 重置并启动GitLab
+
+    gitlab-ctl reconfigure
+    gitlab-ctl restart
+
+初始账户: root 密码:5iveL!fe
+最后没有成功，我怀疑是我的内存不足导致的，因为我的服务器只有1G内存，所以可能是这个原因导致我无法跑的起gitlab
+
 
 
 ## 安装JDK
