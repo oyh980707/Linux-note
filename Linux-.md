@@ -679,6 +679,20 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
     mvn -version
 
+4. 配置setting.xml
+
+    <localRepository>/usr/local/developtools/.m2/repository</localRepository>
+
+    <mirrors>
+        <mirror>
+        <id>aliyun</id>
+        <name>aliyun Maven</name>
+        <mirrorOf>*</mirrorOf>
+            <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+        </mirror>
+    </mirrors>
+
+
 ## 开启阿里云的端口
 
 1. 进入服务器安全管理界面
