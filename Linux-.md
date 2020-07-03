@@ -659,6 +659,26 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
    http:// ip : 8080
 
+
+## 安装maven
+
+### 源码安装
+
+1. 下载maven并解压移动动到/usr/local/developtools下
+
+    wget https://mirrors.bfsu.edu.cn/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+    tar -zxvf apache-maven-3.6.3-bin.tar.gz
+
+2. 配置环境变量
+
+    vim /etc/profile
+    添加 PATH=$PATH:/usr/local/developtools/apache-maven-3.6.3
+    source /etc/profile
+
+3. 检查
+
+    mvn -version
+
 ## 开启阿里云的端口
 
 1. 进入服务器安全管理界面
