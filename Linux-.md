@@ -693,6 +693,14 @@ yum安装git被安装在/usr/libexec/git-core目录下
     </mirrors>
 
 
+## Jenkins 的安装与配置
+
+1. 下载war包
+
+    wget http://updates.jenkins-ci.org/download/war/2.235.1/jenkins.war
+
+2. 把 jenkins.war 放在 Tomcat 解压目录/webapps 目录下
+
 ## 开启阿里云的端口
 
 1. 进入服务器安全管理界面
@@ -2182,11 +2190,88 @@ Eclipse 需要 添加 subclipse 插件才能与SVN服务器进行通信。
 
 ​	
 
+# RabbitMQ
+
+
+1. 安装Erlang
+
+- yum 安装
+
+    yum install esl-erlang_17.3-1~centos~6_amd64.rpm
+    yum install esl-erlang-compat-R14B-1.el6.noarch.rpm
+
+- 源码安装
+
+    1. 新建目录：
+
+        cd /usr/local/leyou
+        mkdir rabbitmq
+        cd rabbitmq
+
+    2. 执行安装命令
+
+        rpm -ivh esl-erlang-17.3-1.x86_64.rpm --force --nodeps
+        rpm -ivh esl-erlang_17.3-1~centos~6_amd64.rpm --force --nodeps
+        rpm -ivh esl-erlang-compat-R14B-1.el6.noarch.rpm --force --nodeps
+
+2. 安装RabbitMQ
+
+    rpm -ivh rabbitmq-server-3.4.1-1.noarch.rpm
+
+3. 设置配置文件
+
+    cp /usr/share/doc/rabbitmq-server-3.4.1/rabbitmq.config.example /etc/rabbitmq/rabbitmq.config
+
+    开启用户远程访问
+    vi /etc/rabbitmq/rabbitmq.config
+    将注释打开
+
+4. 启动、停止
+
+    service rabbitmq-server start
+    service rabbitmq-server stop
+    service rabbitmq-server restart
+
+    此处启动可能会出错：
+
+        7月 20 13:27:28 192.168.163.100 rabbitmq-server[2226]: rabbitmq-server.
+        7月 20 13:27:28 192.168.163.100 systemd[1]: rabbitmq-server.service: control process exited, code=exited status=1
+        7月 20 13:27:28 192.168.163.100 systemd[1]: Failed to start LSB: Enable AMQP service provided by RabbitMQ broker.
+
+    解决办法：
+    参考：https://blog.csdn.net/testcs_dn/article/details/52514199
+
+        # vi /etc/rabbitmq/rabbitmq-env.conf
+    
+            NODENAME=rabbit@localhost
 
 
 
+5. 开启web界面管理工具
 
+    rabbitmq-plugins enable rabbitmq_management
+    service rabbitmq-server restart
 
+6. 设置开机启动
 
+    chkconfig rabbitmq-server on
+
+7. 防火墙开放15672端口
+
+    /sbin/iptables -I INPUT -p tcp --dport 15672 -j ACCEPT
+    
+    /etc/rc.d/init.d/iptables save
+
+ ## 访问web管理页面
+
+    http://ip:15672
+
+### 端口
+
+    5672: rabbitMq的编程语言客户端连接端口
+    15672：rabbitMq管理界面端口
+    25672：rabbitMq集群的端口
+
+    
 
 
