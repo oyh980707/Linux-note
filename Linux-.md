@@ -889,7 +889,7 @@ MySQL 分支为两个软件:
         socket = /usr/local/developtools/mysql/tmp/mysql.sock
         
         sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
-    
+        
         tmp目录不存在，请创建之。否则会出错，创建后要赋予mysql权限，chown -R mysql:mysql tmp，如果mysql.sock指定到/tmp以外的目录，需要在my.cnf中添加[client]并且指定socket位置，否则登录mysql时会报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2) 应该是，默认会找tmp目录下的sock文件
 
 10. 将mysqld服务加入开机自启动项。
@@ -924,6 +924,108 @@ MySQL 分支为两个软件:
 
 最后一步一直报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/usr/local/developtools/mysql/tmp/mysql.sock' (2)
 不想在折腾了，直接yum安装得了
+
+
+
+### MySQL源码安装二
+
+1. 下载MySQL tar包 64位[下载路径mysql-5.7.23-linux-glibc2.12-x86_64.tar.gz)](http://mirrors.sohu.com/mysql/MySQL-5.7/)
+
+2. 通过sftp上传服务器
+
+3. 建立用户，并建立mysql存放目录
+
+   ```text
+   1. groupadd mysql #建立一个mysql的组
+   2. useradd -r -g mysql mysql #建立mysql用户，并且把用户放到mysql组
+   3. passwd mysql #给mysql用户设置一个密码
+   ```
+
+4. 解压到mysql目录
+
+   ```text
+   tar -zxf mysql-5.7.23-linux-glibc2.12-x86_64.tar.gz
+   ```
+
+5. 将文件名改名为mysql
+
+   ```text
+   mv mysql-5.7.23-linux-glibc2.12-x86_64 mysql
+   ```
+
+6. 添加文件`/etc/my.conf`
+
+   ```text
+   [mysqld]
+   basedir = /usr/local/mysql
+   datadir = /usr/local/mysql/data 
+   # 默认端口是3306
+   port = 3306
+   character-set-server=utf8
+   default-storage-engine=INNODB
+   
+   [mysql] default-character-set=utf8 
+   [mysql.server] default-character-set=utf8 
+   [mysql_safe] default-character-set=utf8 
+   [client] default-character-set=utf8
+   ```
+
+7. 复制`mysql/support-files/`目录下的mysql.server到`/etc/init.d/mysql`
+
+   ```text
+   cp mysql.server /etc/init.d/mysql
+   ```
+
+8. 修改`/etc/init.d/mysql`参数
+
+   ```text
+   basedir = /usr/local/mysql
+   datadir = /usr/local/mysql/data
+   ```
+
+9. 给目录/usr/local/mysql 更改拥有者
+
+   ```text
+   chown -R mysql:mysql /usr/local/mysql/
+   ```
+
+10. 初始化（在mysq的bin目录下）
+
+    ```text
+    ./mysqld --initialize --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+    
+    记下临时登录密码
+    ```
+
+11. 启动数据库
+
+    ```text
+    nohup ./mysqld_safe --user=mysql >/usr/local/mysql/log-mysql.out 2>&1 &
+    ```
+
+12. 登录数据库（使用临时密码
+
+    ```text
+    ./mysql -uroot -p 
+    ```
+
+13. 设置密码
+
+    ```text
+    set password=password('root');
+    ```
+
+14. 设置环境变量
+
+    ```text
+    vim /etc/profile
+    
+    添加如下内容：
+    export PATH=$PATH:/usr/local/mysql/bin
+    
+    最后导入下
+    resource /etc/profile
+    ```
 
 
 
