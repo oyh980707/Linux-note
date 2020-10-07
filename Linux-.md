@@ -508,7 +508,7 @@ yum安装git被安装在/usr/libexec/git-core目录下
     systemctl start sshd
 
 4. 安装Postfix以发送通知邮件
-    
+   
     yum install postfix
 
 5. 设置Postfix自启动
@@ -889,7 +889,7 @@ MySQL 分支为两个软件:
         socket = /usr/local/developtools/mysql/tmp/mysql.sock
         
         sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
-
+    
         tmp目录不存在，请创建之。否则会出错，创建后要赋予mysql权限，chown -R mysql:mysql tmp，如果mysql.sock指定到/tmp以外的目录，需要在my.cnf中添加[client]并且指定socket位置，否则登录mysql时会报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2) 应该是，默认会找tmp目录下的sock文件
 
 10. 将mysqld服务加入开机自启动项。
@@ -1227,7 +1227,7 @@ Nginx 是一款高性能的Web服务器软件.
     vim /etc/init.d/nginx
     源地址：https://www.nginx.com/resources/wiki/start/topics/examples/redhatnginxinit/
     找到nginx="..." NGINX_CONF_FILE="..." 这两句改成你自己的目录位置
-
+    
         #!/bin/sh
         # nginx - this script starts and stops the nginx daemon
         #
@@ -1238,27 +1238,27 @@ Nginx 是一款高性能的Web服务器软件.
         # config:      /usr/local/tools/nginx/nginx-1.14.2/conf/nginx.conf
         # config:      /etc/sysconfig/nginx
         # pidfile:     /usr/local/tools/nginx/nginx-1.14.2/logs/nginx.pid
-
+    
         # Source function library.
         . /etc/rc.d/init.d/functions
-
+    
         # Source networking configuration.
         . /etc/sysconfig/network
-
+    
         # Check that networking is up.
         [ "$NETWORKING" = "no" ] && exit 0
-
+    
         # nginx 文件的目录 需要修改为自己的位置
         nginx="/usr/local/developtools/nginx/sbin/nginx"
         prog=$(basename $nginx)
         
         # nginx 配置文件的位置 需要修改为自己的位置
         NGINX_CONF_FILE="/usr/local/developtools/nginx/conf/nginx.conf"
-
+    
         [ -f /etc/sysconfig/nginx ] && . /etc/sysconfig/nginx
-
+    
         lockfile=/usr/local/tools/nginx/nginx-1.14.2/logs/lock/subsys/nginx
-
+    
         make_dirs() {
         # make required directories
         user=`$nginx -V 2>&1 | grep "configure arguments:.*--user=" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
@@ -1278,7 +1278,7 @@ Nginx 是一款高性能的Web服务器软件.
             done
             fi
         }
-
+    
         start() {
             [ -x $nginx ] || exit 5
             [ -f $NGINX_CONF_FILE ] || exit 6
@@ -1290,7 +1290,7 @@ Nginx 是一款高性能的Web服务器软件.
             [ $retval -eq 0 ] && touch $lockfile
             return $retval
         }
-
+    
         stop() {
             echo -n $"Stopping $prog: "
             killproc $prog -QUIT
@@ -1299,14 +1299,14 @@ Nginx 是一款高性能的Web服务器软件.
             [ $retval -eq 0 ] && rm -f $lockfile
             return $retval
         }
-
+    
         restart() {
             configtest || return $?
             stop
             sleep 1
             start
         }
-
+    
         reload() {
             configtest || return $?
             echo -n $"Reloading $prog: "
@@ -1314,23 +1314,23 @@ Nginx 是一款高性能的Web服务器软件.
             RETVAL=$?
             echo
         }
-
+    
         force_reload() {
             restart
         }
-
+    
         configtest() {
         $nginx -t -c $NGINX_CONF_FILE
         }
-
+    
         rh_status() {
             status $prog
         }
-
+    
         rh_status_q() {
             rh_status >/dev/null 2>&1
         }
-
+    
         case "$1" in
             start)
                 rh_status_q && exit 0
@@ -1360,11 +1360,11 @@ Nginx 是一款高性能的Web服务器软件.
                 echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload|configtest}"
                 exit 2
         esac
-
+    
     配置启动脚本权限：chmod a+x /etc/init.d/nginx
     启动nginx: /etc/init.d/nginx start
     停止nginx: /etc/init.d/nginx stop
-
+    
     加入系统服务：chkconfig --add /etc/init.d/nginx
     使用systemctl启动nginx: systemctl start nginx
     使用systemctl停止nginx: systemctl stop nginx
@@ -2242,7 +2242,7 @@ Eclipse 需要 添加 subclipse 插件才能与SVN服务器进行通信。
     参考：https://blog.csdn.net/testcs_dn/article/details/52514199
 
         # vi /etc/rabbitmq/rabbitmq-env.conf
-    
+        
             NODENAME=rabbit@localhost
 
 
@@ -2272,6 +2272,68 @@ Eclipse 需要 添加 subclipse 插件才能与SVN服务器进行通信。
     15672：rabbitMq管理界面端口
     25672：rabbitMq集群的端口
 
-    
 
+​    
+
+# linux操作
+
+## Linux 定时任务cron
+
+```text
+crontab：定时任务的守护进程，精确到分 --> 相当于闹钟
+        日志文件:  ll /var/log/cron*
+        编辑系统文件：vim /etc/crontab
+        编辑用户文件：vim /var/spool/cron/[root]用户
+        进程：ps -ef | grep crond  ==> /etc/init.d/crond restart
+        作用：定时备份，实时备份
+
+usage:  crontab [-u user] file
+        crontab [-u user] [ -e | -l | -r ]
+                (default operation is replace, per 1003.2)
+        -e      (edit user's crontab)
+        -l      (list user's crontab)
+        -r      (delete user's crontab)
+        -i      (prompt before deleting user's crontab)
+        -s      (selinux context)
+
+安装crontab：yum install crontabs
+crontab服务操作说明：
+/sbin/service crond start //启动服务
+/sbin/service crond stop //关闭服务
+/sbin/service crond restart //重启服务
+/sbin/service crond reload //重新载入配置
+查看crontab服务状态：service crond status
+手动启动crontab服务：service crond status
+查看crontab服务是否已设置为开机启动，执行命令：
+方法一： 界面启动      ntsysv 
+方法二： 加入开机自动启动：   chkconfig –level 35 crond on
+
+星号（*）：代表所有可能的值，如month字段为星号，则表示在满足其它字段的制约条件后每月都执行该命令操作。
+逗号（,）：可以用逗号隔开的值指定一个列表范围，例如，“1,2,5,7,8,9”
+中杠（-）：可以用整数之间的中杠表示一个整数范围，例如“2-6”表示“2,3,4,5,6”
+正斜线（/）：可以用正斜线指定时间的间隔频率，例如“0-23/2”表示每两小时执行一次。
+
+使用命令：
+编辑定时任务，默认当前用户
+crontab –e
+==》vim /var/spool/cron/root
+​```
+* * * * * /bin/sh /root/out.sh
+​```
+每隔一分钟输入时间到家目录下的test.txt文件中
+echo "* * * * * echo `date` >> $HOME/test.txt" >> /var/spool/cron/root
+```
+
+[Linux crontab命令详解](https://www.cnblogs.com/ftl1012/p/crontab.html)
+
+## linux的2>&1
+
+几个基本符号及其含义
+
+- /dev/null 表示空设备文件
+- 0 表示stdin标准输入
+- 1 表示stdout标准输出
+- 2 表示stderr标准错误
+
+[Linux里的2>&1究竟是什么](https://www.cnblogs.com/kevin-yuan/p/10063807.html)
 
