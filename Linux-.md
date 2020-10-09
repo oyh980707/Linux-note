@@ -1,162 +1,3 @@
-#Java文件下载功能
-
-HTTP协议提供了文件下载功能，具体参考：rfc2616.txt
-
-其原理为：
-
-![](imgs/img.png)
-
-> 只要设置Content-Disposition响应头浏览器就可以自动保存文件了。 Spring MVC Servlet Socket等技术都可以实现下载功能。
-
-### 图片下载案例
-
-1. 创建控制器方法处理下载请求：
-
-		/**
-		 * 图片下载功能
-		 */
-		@RequestMapping(value="/img.do",
-				produces="image/png")
-		@ResponseBody
-		public byte[] image( 
-				HttpServletResponse response)
-			throws IOException{
-			//@ResponseBody 与 返回值byte[] 配合时候
-			//Spring MVC会将byte[]数组填充到响应
-			//的消息正文中发送到浏览器
-			String file = 
-				URLEncoder.encode("演示.png", "utf-8");
-			//还需要指定两个响应头 
-			//Content-Type 
-			//Content-Disposition: attachment; filename="fname.ext"
-			//response.setContentType("image/png");
-			response.setHeader(
-					"Content-Disposition", 
-					"attachment; filename=\""+file+"\""); 
-			byte[] body = createImage();
-			//response.setContentLength(body.length);
-			return body;
-		}
-	
-2. 创建生成图片数据的方法
-
-		private byte[] createImage()
-			throws IOException{
-			BufferedImage img=
-					new BufferedImage(100, 50, 
-					BufferedImage.TYPE_3BYTE_BGR);
-			img.setRGB(50, 25, 0xffffff);
-			//out相当于酱油瓶
-			ByteArrayOutputStream out=
-					new ByteArrayOutputStream();
-			//将图片的数据导入酱油瓶out
-			ImageIO.write(img, "png", out);
-			out.close();//关闭out
-			//将酱油瓶out中的数据到出来
-			byte[] bytes = out.toByteArray();
-			return bytes;
-		}
-	
-3. 配置spring-mvc.xml在拦截器上放开 URL
-
-		<mvc:exclude-mapping path="/user/img.do"/> 
-
-4. 编写demo.html
-
-		<!DOCTYPE html>
-		<html>
-		<head>
-		<meta charset="UTF-8">
-		<title>Insert title here</title>
-		</head>
-		<body>
-		  <h1>下载功能</h1>
-		  <a href="user/img.do">下载测试图片</a>
-		</body>
-		</html>
-
-5. 测试。
-
-### 下载Excel功能
-
-与下载图片类似，可以实现下载Excel功能，其原理为：
-
-![](imgs/excel.png)
-
-1. 导入Apache 提供的 Excel API
-
-		<!-- POI API 用于处理Excel文件 -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>3.17</version>
-		</dependency>
-
-2. 编写控制器方法
-
-		/*
-		 * 下载 Excel
-		 */
-		@RequestMapping("/excel.do")
-		@ResponseBody
-		public byte[] export(
-				HttpServletResponse response)
-			throws IOException{
-			String file=URLEncoder.encode(
-				"表格.xlsx", "UTF-8");
-			response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-			response.setHeader(
-				"Content-Disposition",
-				"attachment; filename=\""+file+"\"");
-			byte[] body = createExcel(); 
-			return body;
-		}
-
-3. 编写利用POI 生成Excel的方法
-	
-		private byte[] createExcel() throws IOException {
-			//Workbook 就代表着一个Excel文件
-			XSSFWorkbook workbook = 
-					new XSSFWorkbook();
-			//在工作簿中创建一个工作表(sheet)
-			XSSFSheet sheet=
-				workbook.createSheet("第一个表");
-			//在工作表中创建一行(row), 参数是行号：0 1 2 ...
-			XSSFRow row = sheet.createRow(0);
-			//在行中可以添加格子, 参数是列号：0 1 2 3 ...
-			XSSFCell cell = row.createCell(0);
-			cell.setCellValue("Hello World!"); 
-			
-			ByteArrayOutputStream out=
-					new ByteArrayOutputStream();
-			workbook.write(out);
-			workbook.close();
-			out.close();
-			byte[] bytes=out.toByteArray();
-			return bytes;
-		}
-
-4. 配置拦截器，放开URL
-
-		<mvc:exclude-mapping path="/user/excel.do"/>
-
-5. 编写HTML
-
-		<!DOCTYPE html>
-		<html>
-		<head>
-		<meta charset="UTF-8">
-		<title>Insert title here</title>
-		</head>
-		<body>
-		  <h1>下载功能</h1>
-		  <a href="user/img.do">下载测试图片</a>
-		  <a href="user/excel.do">导出Excel</a>
-		</body>
-		</html>
-
-6. 测试
-
 # Linux
 
 ## 什么是Linux
@@ -284,12 +125,6 @@ yum remove sshd
 sudo apt-get –purge remove sshd
 ```
 
-
-
-## 购买阿里云 ECS
-
-![](imgs/ecs.png)
-
 ## sftp
 
 - ftp 占用21端口, 文件传输协议, 用于在客户端和服务器之间传输文件, 采用明码传输文件数据, 不安全.
@@ -319,7 +154,9 @@ get 下载文件到本地文件夹
 	-c 创建包
 	-z 将包进行gzip压缩, 建议文件名 .tar.gz
 	-v 查看打包过程
-	-f 指定打包以后的文件名: .tar 结尾 
+	-f 指定打包以后的文件名: .tar 结尾
+	-p(小写)：保留备份数据的原本权限与属性，常用于备份(-c)重要的配置文件
+	-P(大写)：保留绝对路径，亦即允许备份数据中含有根目录存在之意
 
 释放:
 
@@ -552,8 +389,6 @@ yum安装git被安装在/usr/libexec/git-core目录下
 初始账户: root 密码:5iveL!fe
 最后没有成功，我怀疑是我的内存不足导致的，因为我的服务器只有1G内存，所以可能是这个原因导致我无法跑的起gitlab
 
-
-
 ## 安装JDK
 
 1. 下载Linux版本的JDK
@@ -681,8 +516,9 @@ yum安装git被安装在/usr/libexec/git-core目录下
 
 4. 配置setting.xml
 
-    <localRepository>/usr/local/developtools/.m2/repository</localRepository>
-
+    ```xml
+<localRepository>/usr/local/developtools/.m2/repository</localRepository>
+    
     <mirrors>
         <mirror>
         <id>aliyun</id>
@@ -691,6 +527,7 @@ yum安装git被安装在/usr/libexec/git-core目录下
             <url>http://maven.aliyun.com/nexus/content/groups/public</url>
         </mirror>
     </mirrors>
+    ```
 
 
 ## Jenkins 的安装与配置
@@ -700,18 +537,6 @@ yum安装git被安装在/usr/libexec/git-core目录下
     wget http://updates.jenkins-ci.org/download/war/2.235.1/jenkins.war
 
 2. 把 jenkins.war 放在 Tomcat 解压目录/webapps 目录下
-
-## 开启阿里云的端口
-
-1. 进入服务器安全管理界面
-
-   管理控制台 -> 云服务器 ECS -> 实例 -> 管理 -> 本实例安全组 -> 配置规则
-
-   ![](./imgs/instance.png)
-
-2. 添加规则
-
-   ![](./imgs/rule.png)
 
 ## 安装MySQL
 
@@ -803,7 +628,7 @@ MySQL 分支为两个软件:
 
      set password for root@localhost = password('123');
 
-### 源码安装MySQL
+### 源码安装MySQL(可能失败)
 
 1. 查看旧版本
 
@@ -925,8 +750,6 @@ MySQL 分支为两个软件:
 最后一步一直报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/usr/local/developtools/mysql/tmp/mysql.sock' (2)
 不想在折腾了，直接yum安装得了
 
-
-
 ### MySQL源码安装二
 
 1. 下载MySQL tar包 64位[下载路径mysql-5.7.23-linux-glibc2.12-x86_64.tar.gz)](http://mirrors.sohu.com/mysql/MySQL-5.7/)
@@ -1027,6 +850,95 @@ MySQL 分支为两个软件:
     resource /etc/profile
     ```
 
+### 通过脚本进行数据库备份迁移
+
+#### 在本地打包后传输到目标服务器进行备份
+
+大致脚本如下：
+
+```shell
+#!/bin/bash
+
+DATETIME=`date +%Y_%m_%d_%H%M%S`
+BAKDIR=$(pwd)/$DATETIME
+PREFIX=mysqldump_
+HOST=localhost
+#DB_USER=root
+#DB_PWD=root123
+
+echo "=====start backup to $PREFIX$DATETIME.tar.gz"
+
+# 文件夹不存在就创建
+if [ ! -d "${BAKDIR}" ]; then
+    mkdir ${BAKDIR}
+fi
+
+#mysqldump -h ${HOST} -u${DB_USER} -p${DB_PWD} bs_log > ${BAKDIR}/bs_log.bak.sql
+
+# 前提是在/etc/my.cnf 下增加mysqldump命令的用户名和密码
+mysqldump -h ${HOST} -B bs_log > ${DATETIME}/bs_log.bak.sql
+
+echo "=====start packge tar"
+
+tar -zcvf $PREFIX$DATETIME.tar.gz $DATETIME
+
+echo "=====end packge tar"
+```
+
+需要提前在`/etc/my.cnf`配置文件添加如下内容
+不然MySQL5.6及以后就会报出警告："mysql: [Warning] Using a password on the command line interface can be insecure "
+
+```bash
+[mysqldump]
+user=root
+password=root123
+```
+
+添加后在备份脚本中就不需要涉及用户名密码相关信息
+
+运行脚本后涉及到的备份文件都会打包成 tar.gz 传输到服务器解压后依次恢复即可
+
+相关命令：
+
+```sql
+sftp username@host
+
+tar -zxvf xxx.tar.gz
+
+方式一（在命令提示符窗口
+mysql –u root –p < xxx/backup.sql
+
+方式二（在mysql命令行
+mysql> source xxx/backup.sql;
+```
+
+#### 直接在目标服务器进行远程迁移
+
+前提是:`目标服务器可以直接连接该数据库`
+
+脚本如下：
+
+```bash
+#!/bin/bash
+
+DATETIME=`date +%Y_%m_%d_%H%M%S`
+BAKDIR=$(pwd)/$DATETIME
+HOST=localhost
+REMOTE=10.253.46.249
+DB_USER=root
+DB_PWD=root123
+
+echo "=====start migrate the database to here"
+# 文件夹不存在就创建
+if [ ! -d "${BAKDIR}" ]; then
+    mkdir ${BAKDIR}
+fi
+mysqldump -h ${REMOTE} -u${DB_USER} -p${DB_PWD} -B bs_log > ${DATETIME}/bs_log.bak.sql
+mysql -h ${HOST} -u${DB_USER} -p${DB_PWD} < ${DATETIME}/bs_log.bak.sql
+rm -rf $DATETIME
+echo "=====end migrate"
+```
+
 
 
 ## 部署Web项目到服务器
@@ -1050,7 +962,7 @@ MySQL 分支为两个软件:
 
 3. 在目标服务器的MySQL控制台执行
 
-   create database tedu_store;
+   create database tedu_store; // 创不创建数据库取决于备份出来的数据文件中是否有创建数据库和判断数据库存不存在之类的语句
    use tedu_store;
    source tedu_store.sql;
 
@@ -1101,11 +1013,10 @@ MySQL 分支为两个软件:
    	IDENTIFIED BY "密码";
 
    	例如:
-   	GRANT ALL ON tedu_store.* TO tedu@192.168.17.12 
-   	IDENTIFIED BY "tedu123";
-
-   > 客户端的ip是 192.168.17.12, 用户名是tedu 密码是tedu123
-
+   	GRANT ALL ON database.* TO root@host IDENTIFIED BY "root123";
+   
+> 客户端的ip是 192.168.17.12, 用户名是tedu 密码是tedu123
+   
 2. 服务器防火墙开放 3306 端口(如果需要的话)
 
    firewall-cmd --permanent --add-port=3306/tcp 
@@ -1914,7 +1825,6 @@ Redis 是一个基于内存的高性能的Key-Value非结构化数据库.
 ### 编译安装
 
 下载Redis
-	
 
 	wget http://download.redis.io/releases/redis-3.0.0.tar.gz
 
@@ -2235,17 +2145,16 @@ Tomcat 本身就是开放架构, 可以进行Session管理器的替换. Tomcat R
 
 2. 配置Tomcat的conf/context.xml, 替换Session管理器
 
-   <Valve className="com.bluejeans.tomcat.redissessions.RedisSessionHandlerValve" />
+   	<Valve className="com.bluejeans.tomcat.redissessions.RedisSessionHandlerValve" />
    	
-
-   	<Manager className="com.bluejeans.tomcat.redissessions.RedisSessionManager"
+	<Manager className="com.bluejeans.tomcat.redissessions.RedisSessionManager"
    	    host="10.7.11.19"
    	    port="6379"
    	    database="0"
    	    maxInactiveInterval="60"
    	    sessionPersistPolicies="SAVE_ON_CHANGE"
    	/>
-
+   
 3. 在 webapps/ROOT 中添加测试文件
 
    > add.jsp
@@ -2373,9 +2282,6 @@ Eclipse 需要 添加 subclipse 插件才能与SVN服务器进行通信。
     5672: rabbitMq的编程语言客户端连接端口
     15672：rabbitMq管理界面端口
     25672：rabbitMq集群的端口
-
-
-​    
 
 # linux操作
 
