@@ -507,7 +507,7 @@ yum安装git被安装在/usr/libexec/git-core目录下
 2. 配置环境变量
 
     vim /etc/profile
-    添加 PATH=$PATH:/usr/local/developtools/apache-maven-3.6.3
+    添加 PATH=$PATH:/usr/local/developtools/apache-maven-3.6.3/bin
     source /etc/profile
 
 3. 检查
@@ -529,14 +529,42 @@ yum安装git被安装在/usr/libexec/git-core目录下
     </mirrors>
     ```
 
-
 ## Jenkins 的安装与配置
 
-1. 下载war包
+1. 下载tomcat8并解压到指定目录
+   wget https://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.58/bin/apache-tomcat-8.5.58.tar.gz
+   mv apache-tomcat-8.5.58.tar.gz /usr/local/
+   tar -zxf apache-tomcat-8.5.58.tar.gz
+   mv apache-tomcat-8.5.58 tomcat8
+2. 下载war包并把 jenkins.war 放在 Tomcat 解压目录/webapps 目录下
+   wget http://updates.jenkins-ci.org/download/war/2.235.1/jenkins.war
+   mv jenkins.war /usr/local/tomcat8/webapps
+3. 启动tomcat
+   ./startup.sh
 
-    wget http://updates.jenkins-ci.org/download/war/2.235.1/jenkins.war
+配置
 
-2. 把 jenkins.war 放在 Tomcat 解压目录/webapps 目录下
+1. 浏览器打开`localhost:8080/jenkins`
+2. 安装默认插件（选
+3. 增加管理员（选
+4. 全局工具配置中配置相应的工具
+5. 系统管理凭据中添加凭据：用户名和密码
+6. 系统配置中配置SSH remote hosts（需要插件SSH）
+7. 系统配置中配置Publish over SSH（需要插件Publish over SSH）这里的ssh key还是不太理解
+8. 插件安装在插件管理中进行搜索安装
+
+创建任务（gitlab+git+maven
+
+1. 新建任务 ->任务名 -> 构建一个自由风格的软件项目
+2. 源码管理 -> Git -> 填写仓库的SSH URL或者 HTTP URL ，选择合适的凭据(也就是事先配置的用户名和密码)
+   注意这里拉去代码是否成功，可以去安装Jenkins的服务器用git clone 一下能够成功拉取，如果不能拉取则Jenkins也无法拉取代码，此时也需要将Jenkins服务起的公钥配置到gitlab上
+3. 构建 -> 调用顶层Maven目标 -> 选择版本，目标填写构建语句例如"clean package -Dmaven.test.skip=true"，如果需要在构建时执行语句可以继续添加执行步骤，高级中指定pom.xml文件
+4. 构建后操作步骤 -> send build artifacts over SSH -> 配置构建后上传文件或者执行语句或者两者都做
+5. 保存应用后进行构建打开查看控制台输出
+
+详细参考资料
+[jenkins创建任务git+maven+publish over ssh部署到远程](https://blog.csdn.net/qq_36951116/article/details/103314349)
+[Jenkins安装与配置](https://www.cnblogs.com/xxsl/p/6401636.html)
 
 ## 安装MySQL
 
@@ -1016,7 +1044,7 @@ echo "=====end migrate"
    	GRANT ALL ON database.* TO root@host IDENTIFIED BY "root123";
    
 > 客户端的ip是 192.168.17.12, 用户名是tedu 密码是tedu123
-   
+
 2. 服务器防火墙开放 3306 端口(如果需要的话)
 
    firewall-cmd --permanent --add-port=3306/tcp 
@@ -2146,14 +2174,14 @@ Tomcat 本身就是开放架构, 可以进行Session管理器的替换. Tomcat R
 2. 配置Tomcat的conf/context.xml, 替换Session管理器
 
    	<Valve className="com.bluejeans.tomcat.redissessions.RedisSessionHandlerValve" />
-   	
+      	
 	<Manager className="com.bluejeans.tomcat.redissessions.RedisSessionManager"
-   	    host="10.7.11.19"
-   	    port="6379"
-   	    database="0"
-   	    maxInactiveInterval="60"
-   	    sessionPersistPolicies="SAVE_ON_CHANGE"
-   	/>
+      	    host="10.7.11.19"
+      	    port="6379"
+      	    database="0"
+      	    maxInactiveInterval="60"
+      	    sessionPersistPolicies="SAVE_ON_CHANGE"
+      	/>
    
 3. 在 webapps/ROOT 中添加测试文件
 
