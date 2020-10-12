@@ -2229,6 +2229,38 @@ Eclipse 需要 添加 subclipse 插件才能与SVN服务器进行通信。
 
 ​	
 
+# Node
+
+### yum 安装
+
+yum install -y nodejs
+
+### 二进制源码安装
+
+2. 下载包
+   wget https://nodejs.org/dist/v8.9.1/node-v8.9.1-linux-x64.tar.xz
+
+3. 解压并进入其根目录
+   xz -d node-v8.9.1-linux-x64.tar.xz（这样解压后还会有tar的文件）
+   tar -xvf node-v8.9.1-linux-x64.tar
+mv node-v8.9.1-linux-x64/ node8
+   
+3. 配置Node环境变量
+   vim /etc/profile
+
+   ```shell
+   export NODE_HOME=/usr/local/developtools/node8
+   export PATH=$NODE_HOME/bin:$PATH
+   export NODE_PATH=$NODE_HOME/lib/node_modules:$PATH
+   ```
+   source /etc/profile
+
+4. 测试
+   node -v
+
+5. 安装cnpm
+    npm install -g cnpm --registry=http://registry.npm.taobao.org
+
 # RabbitMQ
 
 
