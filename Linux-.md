@@ -2237,29 +2237,128 @@ yum install -y nodejs
 
 ### 二进制源码安装
 
-2. 下载包
+1. 下载包
    wget https://nodejs.org/dist/v8.9.1/node-v8.9.1-linux-x64.tar.xz
 
-3. 解压并进入其根目录
+2. 解压并进入其根目录
    xz -d node-v8.9.1-linux-x64.tar.xz（这样解压后还会有tar的文件）
    tar -xvf node-v8.9.1-linux-x64.tar
-mv node-v8.9.1-linux-x64/ node8
-   
+   mv node-v8.9.1-linux-x64/ node8
+
 3. 配置Node环境变量
    vim /etc/profile
 
-   ```shell
-   export NODE_HOME=/usr/local/developtools/node8
-   export PATH=$NODE_HOME/bin:$PATH
-   export NODE_PATH=$NODE_HOME/lib/node_modules:$PATH
-   ```
-   source /etc/profile
+    ```shell
+    export NODE_HOME=/usr/local/developtools/node8
+    export PATH=$NODE_HOME/bin:$PATH
+    export NODE_PATH=$NODE_HOME/lib/node_modules:$PATH
+    ```
+    source /etc/profile
 
 4. 测试
    node -v
 
 5. 安装cnpm
-    npm install -g cnpm --registry=http://registry.npm.taobao.org
+   npm install -g cnpm --registry=http://registry.npm.taobao.org
+
+如果想要升级版本，可以选择重新安装新的版本，也可以使用一下方法：
+
+1. `npm i -g n`或者`npm i -g n --force`
+
+   ```shell
+   如果提示：/usr/bin/env: ‘node’: No such file or directory
+   则建立一个软连接到/usr/bin下，命令：ln -s /usr/local/node/node8/bin/node /usr/bin/node
+   ```
+
+2. 安装最新的版本
+
+   ```shell
+   在安装根目录下
+   n latest
+   此处可能提示：-bash: n: command not found
+   暂时未得到解决
+   
+   安装最近的稳定版本
+   n stable 或者 n --stable
+   ```
+
+3. 会生成一个新的node，会提示安装的路径`/usr/bin/node`
+
+4. 在修改`/etc/profile`，然后source一下即可
+
+运行vue项目简单以下步骤：
+
+1. down下项目的源码进入根目录
+
+2. npm install 安装相应的依赖包
+
+   ```text
+   如果慢则换cnpm install
+   如果报错类似如下信息：
+   ...
+   gyp ERR! configure error 
+   gyp ERR! stack Error: EACCES: permission denied, mkdir '/Users/zhang/Documents/data_insight_yinzhou/data_insight_yinzhou/node_modules/node-sass/build'
+   gyp ERR! System Darwin 17.6.0
+   gyp ERR! command "/usr/local/bin/node" "/Users/zhang/Documents/data_insight_yinzhou/data_insight_yinzhou/node_modules/node-gyp/bin/node-gyp.js" "rebuild" "--verbose" "--libsass_ext=" "--libsass_cflags=" "--libsass_ldflags=" "--libsass_library="
+   gyp ERR! cwd /Users/zhang/Documents/data_insight_yinzhou/data_insight_yinzhou/node_modules/node-sass
+   gyp ERR! node -v v10.1.0
+   gyp ERR! node-gyp -v v3.6.2
+   gyp ERR! not ok
+   ...
+   则使用命令：npm install --unsafe-perm
+   即可解决，结果成功了，但是不知道为什么。
+   ```
+
+3. npm run build 构建
+
+4. 同目录下生成文件夹dist，该文件夹打包上传tomcat的webapps下重启即可
+
+```text
+项目重安装：
+Step1：npm cache clean --force
+Step2：rm -rf node_modules
+Step3：rm -rf package-lock.json
+Step4：npm install
+
+运行项目：npm run dev
+```
+
+jenkins搭建web vue项目的自动部署
+
+需要的插件：NodeJS Plugin，Publish Over SSH，GitLab
+
+1. 系统管理”--“Global Tool Configuration”  配置 node 版本
+
+2. 点击“新建”--填写任务名称，选择“构建一个自由风格的软件项目“
+
+3. 填写基本的信息后，勾选构建环境中的`Provide Node & npm bin/ folder to PATH`
+
+4. 构建中执行Shell
+
+   ```shell
+   npm install --unsafe-perm
+   npm run build
+   cd dist
+   rm -rf front.tar.gz
+   tar -zcf front.tar.gz *
+   cd ..
+   ```
+
+5. 构建后操作，上传文件后执行命令
+
+   ```shell
+   cd /data/programs/apache-tomcat-front/webapps/ROOT
+   tar -zxf front.tar.gz .
+   rm -rf front.tar.gz
+   cd ../../bin
+   ./shutdown.sh
+   sleep 10s
+   ./startup.sh
+   ```
+
+6. 如果需要push到gitlab后就触发重新部署，就需要将勾选 构建触发器 中的`Build when a change is pushed to GitLab`并将后面的URL复制到gitlab项目中有个Web Hooks中的URL中去即可
+
+
 
 # RabbitMQ
 
