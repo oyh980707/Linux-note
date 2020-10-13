@@ -1933,9 +1933,34 @@ Redis 是一个基于内存的高性能的Key-Value非结构化数据库.
 > & 符号的作用是将程序放到后台执行
 
 关闭服务
-	
 
 	/usr/local/redis-3.0.0/bin/redis-cli shutdown
+
+端口查看情况：netstat -anp |grep 6379
+
+redis设置密码
+
+```text
+> config set requirepass xxx
+# 查看
+> config get requirepass
+(error) NOAUTH Authentication required.
+
+密码验证：
+> auth xxx
+> config get requirepass
+
+注：
+	这样设置的密码重启后会失效
+
+永久密码设置：
+在redis.conf配置文件中有一行是这样的
+#requirepass foobared  
+去掉注释，并且把foobared改为自己的密码
+requirepass root123
+```
+
+
 
 ### 使用Redis
 
