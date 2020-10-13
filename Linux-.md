@@ -237,6 +237,57 @@ Linux 操作系统初始化脚本 profile
 
 	reboot
 
+## yum安装与卸载
+
+- 显示已经安装的软件包
+
+> yum list installed
+
+- 查找可以安装的软件包（以 tomcat 为例）
+
+>  yum list tomcat
+
+- 安装软件包（以 tomcat 为例）
+
+> yum install tomcat
+>
+> yum -y install tomcat // 自动选择yes，无需在安装过程中输入y
+
+- 卸载软件包（以 tomcat 为例）
+
+> yum remove tomcat // 通过查看安装软件，找到对应的软件进行删除
+
+- 列出软件包的依赖（以 tomcat 为例）
+
+> yum deplist tomcat
+
+- info 显示软件包的描述信息和概要信息（以 tomcat 为例）
+
+> yum info tomcat
+
+- 升级软件包
+  - 升级所有的软件包
+
+  > yum update
+
+  - 升级某一个软件包 ，以升级 tomcat 为例
+
+  > yum update tomcat
+
+  - 检查可更新的程序
+
+  > yum check-update
+
+- Yum 可视化图形界面 Yumex
+
+  yum Extender (简称 yumex ) , 是 yum 的图形化操作界面。可以通过 yumex 方便的查看软件包，安装、卸载软件包。对于对命令行不熟的人简直就是神奇，管理软件包很方便。
+
+    - yumex 安装
+
+    > yum install yumex
+  
+  - 在图形界面可以打开 yumex 进行管理
+
 ## 安装Git
 
 ### yum安装
