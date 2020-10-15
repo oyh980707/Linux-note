@@ -617,6 +617,99 @@ yum安装git被安装在/usr/libexec/git-core目录下
 [jenkins创建任务git+maven+publish over ssh部署到远程](https://blog.csdn.net/qq_36951116/article/details/103314349)
 [Jenkins安装与配置](https://www.cnblogs.com/xxsl/p/6401636.html)
 
+启动脚本参考：
+
+```shell
+#!/bin/bash
+#这里可替换为你自己的执行程序，其他代码无需更改
+JAR_NAME=$1
+Suffix=jar
+APP_NAME=$JAR_NAME.$Suffix
+BASE_PATH=/data/program
+#CUR_SHELL_DIR=`pwd`
+JAR_PATH=$BASE_PATH/$JAR_NAME/$APP_NAME
+#LOG_PATH=./logs/start.log
+LOG_PATH=$BASE_PATH/$JAR_NAME/$JAR_NAME.out
+#LOG_PATH=$LOG_DIR/${JAR_NAME}.log
+#SPRING_PROFILES_ACTIV="-Dspring.profiles.active=eureka2"
+#SPRING_PROFILES_ACTIV=""
+#JAVA_MEM_OPTS=" -server -Xms1024m -Xmx1024m -XX:PermSize=128m"
+#JAVA_MEM_OPTS=""
+#使用说明，用来提示输入参数
+usage() {
+ echo "Usage: sh 脚本名.sh [project_name] [start|stop|restart|status]"
+ exit 1
+}
+
+#检查程序是否在运行
+is_exist(){
+ pid=`ps -ef|grep $APP_NAME|grep -v grep|awk '{print $2}' `
+ #如果不存在返回1，存在返回0 
+ if [ -z "${pid}" ]; then
+ return 1
+ else
+ return 0
+ fi
+}
+
+#启动方法
+start(){
+ is_exist
+ if [ $? -eq "0" ]; then
+ echo "${APP_NAME} is already running. pid=${pid} ."
+ else
+# nohup java $JAVA_MEM_OPTS -jar $JAR_PATH >> $LOG_PATH 2>&1 &
+ nohup java -jar $JAR_PATH >> $LOG_PATH 2>&1 &
+ echo "${APP_NAME} start success"
+ fi
+}
+
+#停止方法
+stop(){
+ is_exist
+ if [ $? -eq "0" ]; then
+ kill -9 $pid
+ else
+ echo "${APP_NAME} is not running"
+ fi
+}
+
+#输出运行状态
+status(){
+ is_exist
+ if [ $? -eq "0" ]; then
+ echo "${APP_NAME} is running. Pid is ${pid}"
+ else
+ echo "${APP_NAME} is NOT running."
+ fi
+}
+
+#重启
+restart(){
+ stop
+ start
+}
+
+#根据输入参数，选择执行对应方法，不输入则执行使用说明
+case "$2" in
+ "start")
+ start
+ ;;
+ "stop")
+ stop
+ ;;
+ "status")
+ status
+ ;;
+ "restart")
+ restart
+ ;;
+ *)
+ usage
+ ;;
+esac
+```
+
 ## 安装MySQL
 
 MySQL 分支为两个软件:
@@ -928,6 +1021,25 @@ MySQL 分支为两个软件:
     最后导入下
     resource /etc/profile
     ```
+
+15. MySQL重启
+    使用 mysqld 脚本重启：/etc/inint.d/mysqld restart
+
+### MySQL的访问控制
+
+#### 改表法
+
+1. 进入MySQL数据库
+2. use mysql
+3. update user set host = '%' where user = 'root'; // root用户可以通过任意主机访问
+4. select host, user from user;
+5. 重启数据库
+
+#### 授权发
+
+1. 进入MySQL数据库
+2. GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root123' WITH GRANT OPTION;
+3. FLUSH  PRIVILEGES;
 
 ### 通过脚本进行数据库备份迁移
 
