@@ -581,6 +581,43 @@ yum安装git被安装在/usr/libexec/git-core目录下
     </mirrors>
     ```
 
+
+
+## nexus安装与配置
+
+1. 下载安装包
+
+2. 上传解压
+
+   ```text
+   解压后出现两个文件夹
+   nexus-3.19.1-01 主要用到这个文件夹
+   sonatype-work 保存所有配置文件的信息(不用动)
+   将两个文件同时移到一个nexus文件夹下方便管理
+   ```
+
+3. 进入nexus的bin目录启动
+
+   ```text
+   ./nexus start
+   如果报错
+   WARNING: ************************************************************
+   WARNING: Detected execution as "root" user.  This is NOT recommended!
+   WARNING: ************************************************************
+   Starting nexus
+   
+   原因：当前是root用户，需要配置一下：
+   bin目录下：vim nexus
+   命令模式下搜索 RUN
+   把#RUN_AS_USER= 改成RUN_AS_USER=root
+   ```
+
+   
+
+
+
+
+
 ## Jenkins 的安装与配置
 
 1. 下载tomcat8并解压到指定目录
