@@ -2584,6 +2584,181 @@ jenkins搭建web vue项目的自动部署
 
 6. 如果需要push到gitlab后就触发重新部署，就需要将勾选 构建触发器 中的`Build when a change is pushed to GitLab`并将后面的URL复制到gitlab项目中有个Web Hooks中的URL中去即可
 
+# Elasticsearch
+
+1. 出于安全考虑，elasticsearch默认不允许以root账号运行。
+
+创建用户：
+
+```sh
+useradd leyou
+```
+
+设置密码：
+
+```
+passwd leyou
+```
+
+切换用户：
+
+```
+su - leyou
+```
+
+2. 利用filezilla上传elasticsearch安装包和elasticsearch-analysis-ik ik分词插件
+
+3. 解压安装包
+
+```
+tar -zxvf elasticsearch-6.2.4.tar.gz
+```
+
+4. 重命名
+
+```
+mv elasticsearch-6.3.0/ elasticsearch
+```
+
+5. 进入config目录：`cd config` 需要修改的配置文件有两个`jvm.options`,`elasticsearch.yml`
+
+    a. Elasticsearch基于Lucene的，而Lucene底层是java实现，因此我们需要配置jvm参数。编辑jvm.options：
+
+        ```
+        默认配置如下：
+        -Xms1g
+        -Xmx1g
+
+        内存占用太多了，我们调小一些：
+        -Xms512m
+        -Xmx512m
+        ```
+
+    b. elasticsearch.yml
+
+        ```
+        vim elasticsearch.yml
+
+        修改数据和日志目录：
+        path.data: /home/leyou/elasticsearch/data # 数据目录位置
+        path.logs: /home/leyou/elasticsearch/logs # 日志目录位置
+
+        把data和logs目录修改指向了elasticsearch的安装目录。但是这两个目录并不存在，因此我们需要创建出来。
+        进入elasticsearch的根目录，然后创建：
+
+        mkdir -p /home/leyou/elasticsearch/data
+        mkdir -p /home/leyou/elasticsearch/logs
+
+        修改绑定的ip：
+        network.host: 0.0.0.0 # 绑定到0.0.0.0，允许任何ip来访问
+        默认只允许本机访问，修改为0.0.0.0后则可以远程访问
+        ```
+目前我们是做的单机安装，如果要做集群，只需要在这个配置文件中添加其它节点信息即可。
+> elasticsearch.yml的其它可配置信息：
+
+| 属性名                             | 说明                                                         |
+| ---------------------------------- | ------------------------------------------------------------ |
+| cluster.name                       | 配置elasticsearch的集群名称，默认是elasticsearch。建议修改成一个有意义的名称。 |
+| node.name                          | 节点名，es会默认随机指定一个名字，建议指定一个有意义的名称，方便管理 |
+| path.conf                          | 设置配置文件的存储路径，tar或zip包安装默认在es根目录下的config文件夹，rpm安装默认在/etc/ elasticsearch |
+| path.data                          | 设置索引数据的存储路径，默认是es根目录下的data文件夹，可以设置多个存储路径，用逗号隔开 |
+| path.logs                          | 设置日志文件的存储路径，默认是es根目录下的logs文件夹         |
+| path.plugins                       | 设置插件的存放路径，默认是es根目录下的plugins文件夹          |
+| bootstrap.memory_lock              | 设置为true可以锁住ES使用的内存，避免内存进行swap             |
+| network.host                       | 设置bind_host和publish_host，设置为0.0.0.0允许外网访问       |
+| http.port                          | 设置对外服务的http端口，默认为9200。                         |
+| transport.tcp.port                 | 集群结点之间通信端口                                         |
+| discovery.zen.ping.timeout         | 设置ES自动发现节点连接超时的时间，默认为3秒，如果网络延迟高可设置大些 |
+| discovery.zen.minimum_master_nodes | 主结点数量的最少值 ,此值的公式为：(master_eligible_nodes / 2) + 1 ，比如：有3个符合要求的主结点，那么这里要设置为2 |
+|                                    |                                                              |
+
+6. bin目录下启动`./elasticsearch.sh`
+
+**可能报错原因**
+错误1：内核过低
+> requires kernel 3.5+ with CONFIG_SECCOMP and CONFIG_SECCOMP_FILTER compiled in ...
+我们使用的是centos6，其linux内核版本为2.6。而Elasticsearch的插件要求至少3.5以上版本。不过没关系，我们禁用这个插件即可。
+修改elasticsearch.yml文件，在最下面添加如下配置：
+```
+bootstrap.system_call_filter: false
+```
+然后重启
+
+
+错误2：文件权限不足
+
+再次启动，又出错了：
+```
+[1]: max file descriptors [4096] for elasticsearch process likely too low, increase to at least [65536]
+```
+我们用的是leyou用户，而不是root，所以文件权限不足。
+
+首先用root用户登录，然后修改配置文件:
+```
+vim /etc/security/limits.conf
+```
+添加下面的内容：
+```
+* soft nofile 65536
+
+* hard nofile 131072
+
+* soft nproc 4096
+
+* hard nproc 4096
+```
+
+错误3：线程数不够
+```
+[1]: max number of threads [1024] for user [leyou] is too low, increase to at least [4096]
+```
+
+这是线程数不够，继续修改配置：
+```
+vim /etc/security/limits.d/90-nproc.conf 
+```
+修改下面的内容：
+```
+* soft nproc 1024
+```
+改为：
+```
+* soft nproc 4096
+```
+
+错误4：进程虚拟内存
+```
+[3]: max virtual memory areas vm.max_map_count [65530] likely too low, increase to at least [262144]
+```
+vm.max_map_count：限制一个进程可以拥有的VMA(虚拟内存区域)的数量，继续修改配置文件， ：
+```
+vim /etc/sysctl.conf 
+```
+添加下面内容：
+```
+vm.max_map_count=655360
+```
+然后执行命令：
+```
+sysctl -p
+```
+
+最后基本可以启动成功了，后台启动`./elasticsearch &`，启动后通过`http://host:9200`访问
+如果访问不了可能是防火墙阻挡了。
+root用户打开防火墙
+firewall-cmd --permanent --add-port=9200/tcp
+重启
+firewall-cmd --reload
+
+就可以访问了
+
+**安装ik分词器**
+Lucene的IK分词器早在2012年已经没有维护了，现在我们要使用的是在其基础上维护升级的版本，并且开发为ElasticSearch的集成插件了，与Elasticsearch一起维护升级，版本也保持一致，最新版本：6.3.0
+
+将下载的elasticsearch-analysis-ik-6.3.0解压到elasticsearch的plugins目录下，重启即可
+```
+unzip elasticsearch-analysis-ik-6.3.0.zip -d ik-analyzer
+```
 
 
 # RabbitMQ
@@ -2591,7 +2766,7 @@ jenkins搭建web vue项目的自动部署
 
 1. 安装Erlang
 
-- yum 安装
+- yum 安装````
 
     yum install esl-erlang_17.3-1~centos~6_amd64.rpm
     yum install esl-erlang-compat-R14B-1.el6.noarch.rpm
@@ -2658,7 +2833,7 @@ jenkins搭建web vue项目的自动部署
     
     /etc/rc.d/init.d/iptables save
 
- ## 访问web管理页面
+## 访问web管理页面
 
     http://ip:15672
 
