@@ -397,7 +397,7 @@ yum安装git被安装在/usr/libexec/git-core目录下
     systemctl start sshd
 
 4. 安装Postfix以发送通知邮件
-   
+  
     yum install postfix
 
 5. 设置Postfix自启动
@@ -928,7 +928,7 @@ MySQL 分支为两个软件:
         tmp目录不存在，请创建之。否则会出错，创建后要赋予mysql权限，chown -R mysql:mysql tmp，如果mysql.sock指定到/tmp以外的目录，需要在my.cnf中添加[client]并且指定socket位置，否则登录mysql时会报错：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2) 应该是，默认会找tmp目录下的sock文件
 
 10. 将mysqld服务加入开机自启动项。
-    
+  
     将 /usr/local/developtools/mysql/support-files/mysql.server 拷贝为 /etc/init.d/mysql 并设置运行权限，这样就可以使用service mysql命令启动/停止服务
         #cp ./support-files/mysql.server /etc/init.d/mysql
         #chmod +x /etc/init.d/mysql
@@ -2628,7 +2628,7 @@ mv elasticsearch-6.3.0/ elasticsearch
         默认配置如下：
         -Xms1g
         -Xmx1g
-
+    
         内存占用太多了，我们调小一些：
         -Xms512m
         -Xmx512m
@@ -2638,17 +2638,17 @@ mv elasticsearch-6.3.0/ elasticsearch
 
         ```
         vim elasticsearch.yml
-
+    
         修改数据和日志目录：
         path.data: /home/leyou/elasticsearch/data # 数据目录位置
         path.logs: /home/leyou/elasticsearch/logs # 日志目录位置
-
+    
         把data和logs目录修改指向了elasticsearch的安装目录。但是这两个目录并不存在，因此我们需要创建出来。
         进入elasticsearch的根目录，然后创建：
-
+    
         mkdir -p /home/leyou/elasticsearch/data
         mkdir -p /home/leyou/elasticsearch/logs
-
+    
         修改绑定的ip：
         network.host: 0.0.0.0 # 绑定到0.0.0.0，允许任何ip来访问
         默认只允许本机访问，修改为0.0.0.0后则可以远程访问
@@ -2842,6 +2842,83 @@ unzip elasticsearch-analysis-ik-6.3.0.zip -d ik-analyzer
     5672: rabbitMq的编程语言客户端连接端口
     15672：rabbitMq管理界面端口
     25672：rabbitMq集群的端口
+
+
+
+# Zookeeper
+
+**前提得有jdk**
+
+1. 下载压缩包
+   wget https://downloads.apache.org/zookeeper/zookeeper-3.5.8/apache-zookeeper-3.5.8-bin.tar.gz
+
+2. 解压，并改名，进入conf目录，拷贝配置文件
+   mv apache-zookeeper-3.5.8-bin/ zookeeper
+   cp zoo_sample.cfg zoo.cfg
+
+3. 修改配置文件
+   vim zoo.cfg
+
+   ```text
+   dataDir=/usr/local/developtools/zookeeper/data
+   
+   安装Zookeeper出现Unable to start AdminServer，existing abnormally问题解决方法
+   由于一般服务器8080端口都会被占用，所以可在zoo.cfg中增加admin.serverPort=没有被占用的端口号
+   增加一条配置
+   admin.serverPort=2180
+   ```
+
+4. 进入bin目录直接启动
+   ./zkServer.sh start
+
+# Kafka
+
+1. 下载压缩包
+   wget https://www.apache.org/dyn/closer.cgi?path=/kafka/2.6.0/kafka_2.12-2.6.0.tgz
+
+2. 解压并改名
+   tar -zxf kafka_2.12-2.6.0.tgz
+   mv kafka_2.12-2.6.0/ kafka
+
+3. 进入config中编辑server.properties文件
+
+   ```text
+   vim server.properties
+   
+   listeners=PLAINTEXT://10.253.46.249:9092
+   advertised.listeners=PLAINTEXT://10.253.46.249:9092
+   log.dirs=/usr/local/developtools/kafka/logs	# 指定log日志存储位置
+   zookeeper.connect=10.253.46.249:2181 # 改为
+   ```
+
+4. 启动（退回到kafka根目录）
+   bin/kafka-server-start.sh config/server.properties &
+   停止
+   bin/kafka-server-stop.sh
+
+```text
+创建Topic
+bin/kafka-topics.sh --create --zookeeper 10.253.46.249:2181 --replication-factor 1 --partitions 1 --topic exemple
+
+查看已经创建的Topic信息
+bin/kafka-topics.sh --list --zookeeper 10.253.46.249:2181
+
+发送消息
+bin/kafka-console-producer.sh --broker-list 192.168.220.128:9092 --topic exemple
+
+接收消息
+bin/kafka-console-consumer.sh --bootstrap-server 10.253.46.249:9092 --topic exemple --from-beginning
+```
+
+
+
+
+
+
+
+
+
+
 
 # linux操作
 
