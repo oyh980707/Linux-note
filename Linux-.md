@@ -3169,6 +3169,8 @@ chkconfig nginx on
 
 # RabbitMQ
 
+[神作RabbitMQ安装教程](https://gist.github.com/fernandoaleman/fe34e83781f222dfd8533b36a52dddcc)
+
 安装包清单：
 rabbitmq-server-3.4.1-1.noarch.rpm
 
