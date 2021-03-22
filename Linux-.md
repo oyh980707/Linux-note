@@ -1268,6 +1268,30 @@ echo "=====end migrate"
 
 3. 测试...
 
+
+
+## MySQL 遇到的些问题
+
+1. 错误信息：mariadb for Linux错误 ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using passwor
+
+```text
+解决办法是重置密码：（生产上要注意，会重启服务）
+1、配置跳过mariadb验证
+vi /etc/my.cnf
+[mysqld]后面任意一行添加“skip-grant-tables”用来跳过密码验证的过程
+2、重启mariadb
+systemctl restart mariadb.service #重启MariaDB
+3、登录
+4、修改密码
+update mysql.user set password=password(‘linux’) where user=‘root’;
+flush privileges；
+quit
+5、删除配置文件中的 skip-grant-tables
+6、重启服务登录	
+```
+
+
+
 ## 文件权限 
 
 Linux 限定用户可以读写那些文件.
@@ -2628,7 +2652,7 @@ mv elasticsearch-6.3.0/ elasticsearch
         默认配置如下：
         -Xms1g
         -Xmx1g
-    
+        
         内存占用太多了，我们调小一些：
         -Xms512m
         -Xmx512m
@@ -2638,17 +2662,17 @@ mv elasticsearch-6.3.0/ elasticsearch
 
         ```
         vim elasticsearch.yml
-    
+        
         修改数据和日志目录：
         path.data: /home/leyou/elasticsearch/data # 数据目录位置
         path.logs: /home/leyou/elasticsearch/logs # 日志目录位置
-    
+        
         把data和logs目录修改指向了elasticsearch的安装目录。但是这两个目录并不存在，因此我们需要创建出来。
         进入elasticsearch的根目录，然后创建：
-    
+        
         mkdir -p /home/leyou/elasticsearch/data
         mkdir -p /home/leyou/elasticsearch/logs
-    
+        
         修改绑定的ip：
         network.host: 0.0.0.0 # 绑定到0.0.0.0，允许任何ip来访问
         默认只允许本机访问，修改为0.0.0.0后则可以远程访问
@@ -2815,7 +2839,7 @@ ll /etc/fdfs/
         -rw-r--r--. 1 root root 1461 10月 28 07:34 client.conf.sample：是客户端的配置文件模板
         -rw-r--r--. 1 root root 7927 10月 28 07:34 storage.conf.sample：是storage的配置文件模板
         -rw-r--r--. 1 root root 7200 10月 28 07:34 tracker.conf.sample：是tracker的配置文件模板
- 
+
 5. 配置并启动tracker服务
 FastDFS的tracker和storage在刚刚的安装过程中，都已经被安装了，因此我们安装这两种角色的方式是一样的。不同的是，两种需要不同的配置文件。
 要启动tracker，就修改刚刚看到的`tarcker.conf`，并且启动`fdfs_trackerd`脚本即可。
@@ -3213,7 +3237,6 @@ esl-erlang-compat-R14B-1.el6.noarch.rpm
     将注释打开
     {loopback_users, []}
     
-
 4. 启动、停止
 
     service rabbitmq-server start
