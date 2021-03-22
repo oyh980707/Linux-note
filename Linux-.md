@@ -2134,6 +2134,30 @@ redis设置密码
 requirepass root123
 ```
 
+## Redis常见问题
+
+1. Redis 无法远程连接
+
+```text
+确定以下事情
+1.ping linux服务器ip地址是能够通的。
+2.linux服务器防火墙开启，并且也设置了6379端口开放。
+3.腾讯云上也设置安全组，开放6379端口。
+4.确认redis服务已经启动了。
+
+在以上问题都是正常的情况下，依旧不能远程连接上redis，得出两点：
+1.注释掉#bind 127.0.0.1，这样子就不会绑定只有该端口可以访问
+2.如果是各个ip都可以访问的情况下，设置redis密码
+
+操作：
+1.我们找到redis的配置文件redis.conf，找到绑定的ip，注释掉
+2.然后用：/requirepass 快速定位到redis.conf中的配置
+# requirepass foobared
+然后去掉注释，并且设置密码
+修改完毕后保存退出。
+3.重启redis-server服务即可远程连接上
+```
+
 
 
 ### 使用Redis
@@ -2866,6 +2890,7 @@ chkconfig iptables off 或者 service firewalld stop
 启动tracker服务器:     `/etc/init.d/fdfs_trackerd start`
 停止tracker服务器:     `/etc/init.d/fdfs_trackerd stop`
 不过安装过程中，fdfs已经被设置为系统服务，我们可以采用熟悉的服务启动方式：
+
 ```shell
 service fdfs_trackerd start # 启动fdfs_trackerd服务，停止用stop
 ```
@@ -2898,6 +2923,7 @@ mkdir -p /leyou/storage
 启动storage服务器：`/etc/init.d/fdfs_storaged start`
 停止storage服务器：`/etc/init.d/fdfs_storaged stop`
 推荐使用：
+
 ```shell
 service fdfs_storaged start  # 启动fdfs_storaged服务，停止用stop
 ```
@@ -3372,7 +3398,6 @@ vim /etc/sysconfig/iptables
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
 保存退出后重启防火墙
 service iptables restart
-
 
 二、firewall防火墙
 1、查看firewall服务状态
