@@ -3723,3 +3723,10 @@ echo "* * * * * echo `date` >> $HOME/test.txt" >> /var/spool/cron/root
 
 [Linux里的2>&1究竟是什么](https://www.cnblogs.com/kevin-yuan/p/10063807.html)
 
+## Linux中查看占用端口的进程
+
+执行命令：
+netstat -anp|grep 8080
+输出结果：
+tcp 0 0 :::8080 ::: LISTEN 12006/java
+执行命令： ps -ef | grep 12006
