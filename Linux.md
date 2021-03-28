@@ -180,7 +180,7 @@ get 下载文件到本地文件夹
 语法:
 
 ```text
-wget http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jdk-8u171-linux-x64.tar.gz
+wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz"
 ```
 
 ## 配置Java环境变量
@@ -1640,6 +1640,24 @@ Nginx 是一款高性能的Web服务器软件.
     systemctl enable nginx
     或者
     配置开机启动:vi /etc/rc.local在最后加一句/etc/init.d/nginx start
+
+## Nginx 添加模块
+
+```text
+1. 进入nginx的源码安装目录
+2. ./configure --prefix=/usr/local/nginx --with-http_ssl_module
+3. 执行 make （注意：千万别 make install ，否则就覆盖安装了）， make完之后在nginx-1.10.2/objs目录下就多了个nginx，这个就是新版本的程序了。
+4. 备份旧的nginx程序
+	mv /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx.bak
+5. 拷贝新的nginx程序到sbin目录下
+	cp nginx-1.10.2/objs/nginx /usr/local/nginx/sbin/
+6. 测试
+	/usr/local/nginx/sbin/nginx -t
+7. 查看模块是否已安装
+	/usr/local/nginx/sbin/nginx -V
+8. 重启Nginx
+	/usr/local/nginx/sbin/nginx -s reload
+```
 
 ## Nginx 的配置文件结构
 
