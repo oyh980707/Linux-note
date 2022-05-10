@@ -118,6 +118,10 @@ sudo apt-get install openssh-server（由osc网友 火耳提供）
 开启ssh服务
 service ssh start
 
+centos 7 及以上
+systemctl restart sshd
+
+
 卸载
 如果你用的是redhat，fedora，centos等系列linux发行版，那么敲入以下命令：
 yum remove sshd
